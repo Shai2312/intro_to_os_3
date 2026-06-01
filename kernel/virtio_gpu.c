@@ -578,3 +578,23 @@ void display_daemon(void)
         acquire(&tickslock);
     }
 }
+
+
+// --------------------- added functions by student -----------------
+
+int map_frame_buffer_map_display(pagetable_t pagetable, uint64 va)
+{
+    for (int i = 0; i < FB_PAGES; i++) {
+        uint64 user_va = va + i * PGSIZE;
+        uint64 pa = (uint64)fb[i];
+
+        if (mappages(pagetable, user_va, PGSIZE, pa, PTE_U | PTE_R | PTE_W) < 0) {
+            // Roll back pages already mapped.
+            // do_free = 0 because these are kernel-owned framebuffer pages.
+            uvmunmap(pagetable, va, i, 0);
+            return -1;
+        }
+    }
+
+    return 0;
+}

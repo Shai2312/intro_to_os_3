@@ -6,6 +6,7 @@
 #include "spinlock.h"
 #include "proc.h"
 
+
 uint64
 sys_exit(void)
 {
@@ -111,10 +112,68 @@ sys_flip_display(void)
 //   Pass 0 to let the kernel auto-select the next available VA above p->sz.
 //
 // Returns the mapped virtual address on success, (uint64)-1 on failure.
-//
+
+
+static int check_free_memory(pagetable_t pagetable, uint64 va, uint64 size)
+{
+    if (va >= MAXVA || va + size < va || va + size > MAXVA)
+        return 0;
+
+    for (uint64 a = va; a < va + size; a += PGSIZE) {
+        pte_t *pte = walk(pagetable, a, 0);
+
+        if (pte != 0 && (*pte & PTE_V))
+            return 0;
+    }
+
+    return 1;
+}
+
+
 // TODO: Students implement this syscall.
 uint64
 sys_map_display(void)
 {
-  return -1;
+  int addr;
+  argint(0, &addr);
+  struct proc *p = myproc();
+  uint64 size = PGSIZE*GPU_FB_PAGES;
+  
+  if (p->display_mapped) // check if not mapped already
+    return -1;
+
+  if(addr < 0) // make sure valid addr value
+    return -1;
+  
+  if (addr != 0 && addr % PGSIZE != 0) // make sure if addr not 0 must be page alligned
+    return -1;
+  
+  if(addr == 0){ // auto select va
+    addr = PGROUNDUP(p->sz);
+    int found = 0;
+    while(addr + size > addr && addr + size <= MAXVA && !found){ // search for a valid adress
+      if(check_free_memory(p->pagetable, addr, size))
+        found = 1;
+      addr += PGSIZE;
+    }
+    if(!found){
+      return -1;
+    }
+  }
+  else {
+    if(!check_free_memory(p->pagetable, addr, size))
+      return -1;
+  }
+
+  if(map_frame_buffer_map_display(p->pagetable, addr) < 0)
+    return -1;
+  
+  p->display_mapped = 1;
+  p->display_va = addr;
+  return addr;
+}
+
+void unmap_display(pagetable_t pagetable, uint64 va)
+{
+    uvmunmap(pagetable, va, GPU_FB_PAGES, 0);
 }
