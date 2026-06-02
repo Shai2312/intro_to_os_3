@@ -102,7 +102,35 @@ sys_uptime(void)
 uint64
 sys_flip_display(void)
 {
-  return -1;
+  uint64 addr;
+  argaddr(0, &addr);
+  struct proc *p = myproc();
+  uint64 size = PGSIZE*GPU_FB_PAGES;
+  uint64 pa_list[GPU_FB_PAGES];
+
+  if(p->display_mapped == 1)
+    return -1;
+
+  if (addr <= 0 || addr % PGSIZE != 0) // make sure addr valid(positive) and page alligned
+    return -1;
+  if (addr >= MAXVA || addr + size < addr || addr + size > MAXVA) // given addr is invalid because too small to fit all buffer
+        return -1;
+  
+  for (int i = 0; i < GPU_FB_PAGES; i++) {
+    uint64 a = addr + i * PGSIZE;
+    pte_t *pte = walk(p->pagetable, a, 0);
+
+    if (pte == 0 || ((*pte & PTE_V) == 0) || ((*pte & PTE_U) == 0))    // page not created (and buffer not whole) or without use permission
+        return -1;
+    
+    pa_list[i] = PTE2PA(*pte);
+  }
+  
+  if (virtio_gpu_flip(pa_list) < 0)  //mount the user given frame buffer
+    return -1;
+  
+  p->display_mapped = 2;
+  return 0;
 }
 
 // sys_map_display: map the GPU's kernel framebuffer pages (fb[]) directly
@@ -134,11 +162,14 @@ static int check_free_memory(pagetable_t pagetable, uint64 va, uint64 size)
 uint64
 sys_map_display(void)
 {
-  int addr;
-  argint(0, &addr);
+  uint64 addr;
+  argaddr(0, &addr);
   struct proc *p = myproc();
   uint64 size = PGSIZE*GPU_FB_PAGES;
-  
+
+  if(p->display_mapped == 2)
+    virtio_gpu_restore_kernel_fb();
+    
   if (p->display_mapped) // check if not mapped already
     return -1;
 
@@ -154,7 +185,8 @@ sys_map_display(void)
     while(addr + size > addr && addr + size <= MAXVA && !found){ // search for a valid adress
       if(check_free_memory(p->pagetable, addr, size))
         found = 1;
-      addr += PGSIZE;
+      if(!found)
+        addr += PGSIZE;
     }
     if(!found){
       return -1;

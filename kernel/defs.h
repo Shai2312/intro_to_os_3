@@ -192,7 +192,8 @@ void            virtio_gpu_commit(void);
 void            display_daemon(void);
 
 int map_frame_buffer_map_display(pagetable_t pagetable, uint64 va);
-
+int virtio_gpu_flip(uint64 *pa_list);
+void virtio_gpu_restore_kernel_fb(void);
 
 // sysproc.c
 void unmap_display(pagetable_t pagetable, uint64 va);

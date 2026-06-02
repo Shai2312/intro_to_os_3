@@ -580,7 +580,7 @@ void display_daemon(void)
 }
 
 
-// --------------------- added functions by student -----------------
+// --------------------- added functions by students -----------------
 
 int map_frame_buffer_map_display(pagetable_t pagetable, uint64 va)
 {
@@ -589,12 +589,43 @@ int map_frame_buffer_map_display(pagetable_t pagetable, uint64 va)
         uint64 pa = (uint64)fb[i];
 
         if (mappages(pagetable, user_va, PGSIZE, pa, PTE_U | PTE_R | PTE_W) < 0) {
-            // Roll back pages already mapped.
-            // do_free = 0 because these are kernel-owned framebuffer pages.
-            uvmunmap(pagetable, va, i, 0);
+            uvmunmap(pagetable, va, i, 0);      // do_free = 0 because these are kernel-owned framebuffer pages.
             return -1;
         }
     }
 
     return 0;
+}
+
+int virtio_gpu_flip(uint64 *pa_list)
+{
+    static struct virtio_gpu_mem_entry entries[FB_PAGES];
+
+    for (int i = 0; i < FB_PAGES; i++) {
+        entries[i].addr = pa_list[i];
+        entries[i].length = PGSIZE;
+        entries[i].padding = 0;
+    }
+
+    gpu_cmd_detach();
+    gpu_cmd_attach(entries, FB_PAGES);
+
+    gpu_transfer_flush();
+
+    return 0;
+}
+
+void virtio_gpu_restore_kernel_fb(void)
+{
+    static struct virtio_gpu_mem_entry fb_entries[FB_PAGES];
+
+    for (int i = 0; i < FB_PAGES; i++) {
+        fb_entries[i].addr = (uint64)fb[i];
+        fb_entries[i].length = PGSIZE;
+        fb_entries[i].padding = 0;
+    }
+
+    gpu_cmd_detach();
+    gpu_cmd_attach(fb_entries, FB_PAGES);
+    gpu_transfer_flush();
 }

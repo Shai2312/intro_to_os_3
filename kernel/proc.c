@@ -125,6 +125,9 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
+  p->display_mapped = 0;
+  p->display_va = 0;
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -146,10 +149,6 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
-
-  p->display_mapped = 0;
-  p->display_va = 0;
-
   return p;
 }
 
@@ -162,8 +161,10 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
-  if (p->display_mapped)
+  if (p->pagetable && p->display_mapped == 1)
     unmap_display(p->pagetable, p->display_va);
+  if (p->display_mapped == 2)
+    virtio_gpu_restore_kernel_fb();
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
   p->pagetable = 0;

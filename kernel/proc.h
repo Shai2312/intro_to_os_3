@@ -106,6 +106,6 @@ struct proc {
   char name[16];               // Process name (debugging)
 
 
-  uint64 display_va;
-  int display_mapped;
+  uint64 display_va;          // for the remove of process
+  int display_mapped;         // 0 for not mapped, 1 for Memory-Mapped Framebuffer and 2 for Zero-Copy Page Flip
 };
