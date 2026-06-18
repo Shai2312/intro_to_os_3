@@ -18,7 +18,7 @@
 #define SCREEN_H 480
 #define FB_BYTES (SCREEN_W * SCREEN_H * 4) // 300 × PGSIZE
 #define SCALE 4                            // each 8×8 glyph pixel → 4×4 screen pixels
-#define COLOR_BG 0x00000000u
+#define COLOR_BG 0x00102840u
 #define COLOR_FG 0x00FFFFFFu
 
 // ── 8×8 bitmap font (printable ASCII 0x20–0x7E) ──────────────────────
@@ -130,6 +130,139 @@ putpixel(uint32 *fb, int x, int y, uint32 color)
 }
 
 static void
+fill_rect(uint32 *fb, int x, int y, int w, int h, uint32 color)
+{
+    if (x < 0)
+    {
+        w += x;
+        x = 0;
+    }
+    if (y < 0)
+    {
+        h += y;
+        y = 0;
+    }
+    if (x + w > SCREEN_W)
+        w = SCREEN_W - x;
+    if (y + h > SCREEN_H)
+        h = SCREEN_H - y;
+    if (w <= 0 || h <= 0)
+        return;
+
+    for (int dy = 0; dy < h; dy++)
+        for (int dx = 0; dx < w; dx++)
+            putpixel(fb, x + dx, y + dy, color);
+}
+
+static uint32
+rgb(int r, int g, int b)
+{
+    return ((uint32)r << 16) | ((uint32)g << 8) | (uint32)b;
+}
+
+static void
+draw_rainbow_a(uint32 *fb)
+{
+    const uint32 colors[6] = {
+        rgb(255, 40, 40),
+        rgb(255, 130, 20),
+        rgb(255, 220, 40),
+        rgb(80, 220, 100),
+        rgb(40, 130, 255),
+        rgb(170, 80, 220),
+    };
+    const int xs[6] = {40, 80, 120, 160, 200, 240};
+    for (int row = 0; row < 6; row++)
+    {
+        int y = 120 + row * 18;
+        for (int i = 0; i < 6; i++)
+            fill_rect(fb, xs[i], y, 30, 12, colors[row]);
+    }
+}
+
+static void
+draw_rainbow_b(uint32 *fb)
+{
+    const uint32 colors[6] = {
+        rgb(255, 40, 40),
+        rgb(255, 130, 20),
+        rgb(255, 220, 40),
+        rgb(80, 220, 100),
+        rgb(40, 130, 255),
+        rgb(170, 80, 220),
+    };
+    const int xs[7] = {20, 60, 100, 140, 180, 220, 260};
+    for (int row = 0; row < 6; row++)
+    {
+        int y = 120 + row * 18;
+        for (int i = 0; i < 7; i++)
+            fill_rect(fb, xs[i], y, 30, 12, colors[row]);
+    }
+}
+
+static void
+draw_nyan_cat_pose_a(uint32 *fb)
+{
+    fill_rect(fb, 280, 220, 40, 16, rgb(160, 140, 120));
+    fill_rect(fb, 320, 180, 140, 100, rgb(240, 200, 180));
+    fill_rect(fb, 335, 195, 110, 70, rgb(255, 120, 180));
+    fill_rect(fb, 350, 210, 4, 10, rgb(255, 80, 140));
+    fill_rect(fb, 380, 230, 4, 10, rgb(255, 180, 40));
+    fill_rect(fb, 420, 205, 4, 10, rgb(140, 220, 255));
+    fill_rect(fb, 390, 250, 4, 10, rgb(220, 120, 255));
+    fill_rect(fb, 450, 190, 90, 80, rgb(180, 180, 180));
+    fill_rect(fb, 460, 170, 15, 25, rgb(180, 180, 180));
+    fill_rect(fb, 515, 170, 15, 25, rgb(180, 180, 180));
+    fill_rect(fb, 470, 215, 8, 12, rgb(0, 0, 0));
+    fill_rect(fb, 505, 215, 8, 12, rgb(0, 0, 0));
+    fill_rect(fb, 490, 230, 6, 6, rgb(255, 100, 100));
+    fill_rect(fb, 484, 242, 20, 4, rgb(24, 24, 24));
+    fill_rect(fb, 340, 280, 16, 30, rgb(160, 140, 120));
+    fill_rect(fb, 385, 280, 16, 20, rgb(160, 140, 120));
+    fill_rect(fb, 425, 280, 16, 30, rgb(160, 140, 120));
+    fill_rect(fb, 470, 280, 16, 20, rgb(160, 140, 120));
+}
+
+static void
+draw_nyan_cat_pose_b(uint32 *fb)
+{
+    fill_rect(fb, 280, 210, 40, 16, rgb(160, 140, 120));
+    fill_rect(fb, 320, 180, 140, 100, rgb(240, 200, 180));
+    fill_rect(fb, 335, 195, 110, 70, rgb(255, 120, 180));
+    fill_rect(fb, 350, 210, 4, 10, rgb(255, 80, 140));
+    fill_rect(fb, 380, 230, 4, 10, rgb(255, 180, 40));
+    fill_rect(fb, 420, 205, 4, 10, rgb(140, 220, 255));
+    fill_rect(fb, 390, 250, 4, 10, rgb(220, 120, 255));
+    fill_rect(fb, 450, 190, 90, 80, rgb(180, 180, 180));
+    fill_rect(fb, 460, 170, 15, 25, rgb(180, 180, 180));
+    fill_rect(fb, 515, 170, 15, 25, rgb(180, 180, 180));
+    fill_rect(fb, 470, 215, 8, 12, rgb(0, 0, 0));
+    fill_rect(fb, 505, 215, 8, 12, rgb(0, 0, 0));
+    fill_rect(fb, 490, 230, 6, 6, rgb(255, 100, 100));
+    fill_rect(fb, 484, 242, 20, 4, rgb(24, 24, 24));
+    fill_rect(fb, 340, 280, 16, 20, rgb(160, 140, 120));
+    fill_rect(fb, 385, 280, 16, 30, rgb(160, 140, 120));
+    fill_rect(fb, 425, 280, 16, 20, rgb(160, 140, 120));
+    fill_rect(fb, 470, 280, 16, 30, rgb(160, 140, 120));
+}
+
+static void
+render_nyan_a(uint32 *fb)
+{
+    fill_rect(fb, 0, 0, SCREEN_W, SCREEN_H, COLOR_BG);
+    draw_rainbow_a(fb);
+    draw_nyan_cat_pose_a(fb);
+}
+
+static void
+render_nyan_b(uint32 *fb)
+{
+    fill_rect(fb, 0, 0, SCREEN_W, SCREEN_H, COLOR_BG);
+    draw_rainbow_b(fb);
+    draw_nyan_cat_pose_b(fb);
+}
+
+static void
 draw_char(uint32 *fb, int cx, int cy, unsigned char ch)
 {
     if (ch >= 128)
@@ -153,28 +286,9 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        fprintf(2, "Usage: show_flip <text>\n");
+        fprintf(2, "Usage: show_flip <text> | show_flip nyan\n");
         exit(1);
     }
-
-    // Join all arguments with spaces.
-    char text[256];
-    int pos = 0;
-    for (int i = 1; i < argc && pos < (int)sizeof(text) - 1; i++)
-    {
-        if (i > 1 && pos < (int)sizeof(text) - 1)
-            text[pos++] = ' ';
-        for (char *s = argv[i]; *s && pos < (int)sizeof(text) - 1; s++)
-            text[pos++] = *s;
-    }
-    text[pos] = '\0';
-
-    // Clamp to what fits on one line at this scale.
-    int char_w = 8 * SCALE;
-    int char_h = 8 * SCALE;
-    int max_chars = SCREEN_W / char_w;
-    if (pos > max_chars)
-        pos = max_chars;
 
     // Allocate a page-aligned framebuffer (FB_BYTES = 300 × PGSIZE).
     uint32 *fb = (uint32 *)sbrk(FB_BYTES);
@@ -187,12 +301,54 @@ int main(int argc, char *argv[])
     // Clear to background.
     memset(fb, 0, FB_BYTES);
 
-    // Render text centred on screen.
-    int text_w = pos * char_w;
-    int x0 = (SCREEN_W - text_w) / 2;
-    int y0 = (SCREEN_H - char_h) / 2;
-    for (int i = 0; i < pos; i++)
-        draw_char(fb, x0 + i * char_w, y0, (unsigned char)text[i]);
+    if (argc == 2 && strcmp(argv[1], "nyan") == 0)
+    {
+        while (1)
+        {
+            render_nyan_a(fb);
+            if (flip_display(fb) < 0)
+            {
+                fprintf(2, "show_flip: flip_display failed\n");
+                exit(1);
+            }
+            sleep(10);
+            render_nyan_b(fb);
+            if (flip_display(fb) < 0)
+            {
+                fprintf(2, "show_flip: flip_display failed\n");
+                exit(1);
+            }
+            sleep(10);
+        }
+    }
+    else
+    {
+        // Join all arguments with spaces.
+        char text[256];
+        int pos = 0;
+        for (int i = 1; i < argc && pos < (int)sizeof(text) - 1; i++)
+        {
+            if (i > 1 && pos < (int)sizeof(text) - 1)
+                text[pos++] = ' ';
+            for (char *s = argv[i]; *s && pos < (int)sizeof(text) - 1; s++)
+                text[pos++] = *s;
+        }
+        text[pos] = '\0';
+
+        // Clamp to what fits on one line at this scale.
+        int char_w = 8 * SCALE;
+        int char_h = 8 * SCALE;
+        int max_chars = SCREEN_W / char_w;
+        if (pos > max_chars)
+            pos = max_chars;
+
+        // Render text centred on screen.
+        int text_w = pos * char_w;
+        int x0 = (SCREEN_W - text_w) / 2;
+        int y0 = (SCREEN_H - char_h) / 2;
+        for (int i = 0; i < pos; i++)
+            draw_char(fb, x0 + i * char_w, y0, (unsigned char)text[i]);
+    }
 
     // Zero-copy flip: the kernel re-points the GPU resource's backing
     // pages to fb's physical pages; no pixel data is copied.
